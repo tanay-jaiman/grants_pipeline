@@ -4,6 +4,7 @@
 from src.extract import parse_xml
 from src.analysis import *
 from src.export import export_year_sheet
+from src.clean import clean_xml_file
 import argparse
 
 # Add and Parse arguments
@@ -21,6 +22,7 @@ YEAR = args.year
 SHEETNAME = f'{ORGANIZATION}_{YEAR}.xlsx'
 
 # Extract data
+clean_xml_file(FILENAME)
 data = parse_xml(FILENAME)
 
 # Create tables

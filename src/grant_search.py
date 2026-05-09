@@ -8,7 +8,7 @@ def extract_grant_info(grant, ns):
             if value and value.strip():
                 return value.strip()
 
-        return None
+        return "None"
 
     return {
         "name" : get_text([
