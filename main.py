@@ -17,8 +17,8 @@ args = parser.parse_args()
 
 # Global declarations
 FILENAME = args.xml
-ORGANIZATION = args.organization.lower().replace(' ', '_')
-YEAR = args.year
+ORGANIZATION = args.organization if len(args.organization) > 0 else args.xml.split('/')[-1].split('_')[0]
+YEAR = args.year if len(args.year) > 0 else args.xml.split('/')[-1].split('_')[1][:-4]
 SHEETNAME = f'{ORGANIZATION}_{YEAR}.xlsx'
 
 # Extract data

@@ -18,13 +18,8 @@ then
     echo "  sudo apt update && sudo apt install fzf"
     echo ""
 
-    echo "Windows (Chocolatey):"
-    echo "  choco install fzf"
-    echo ""
-
-    echo "Windows (Scoop):"
-    echo "  scoop install fzf"
-    echo ""
+    echo "Windows:"
+    echo "  Just look up how to install fzf (fuzzyfinder) on Windows"
 
     exit 1
 fi
