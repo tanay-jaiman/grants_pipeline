@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+import re
+
+from src.config import CATEGORIES
+
 # Find and return object with all relevant information for recipient checking for all possible IRS keywords
 def extract_grant_info(grant, ns):
     def get_text(possible_paths):
@@ -56,72 +60,107 @@ def extract_grant_info(grant, ns):
         ])
     }
 
-def categorize_purpose(purpose: str):
+STOP_WORDS = {
+    "a",
+    "an",
+    "and",
+    "by",
+    "for",
+    "in",
+    "impact",
+    "of",
+    "or",
+    "program",
+    "project",
+    "social",
+    "the",
+    "to",
+    "with",
+    "support",
+    "general"
+}
 
-    if not purpose:
-        return "Other"
+RELATED_TERMS = {
+    "arts": {"art", "artist", "artists", "culture", "cultural", "museum", "music", "storytelling"},
+    "culture": {"art", "arts", "cultural", "history", "museum", "music", "storytelling"},
+    "education": {"academic", "children", "internship", "learning", "school", "scholarship", "student", "students", "youth"},
+    "environment": {"climate", "conservation", "ecology", "environmental", "habitat", "restoration", "sustainable", "wildlife"},
+    "health": {"clinic", "disease", "healthcare", "hospital", "medical", "mental", "wellness"},
+    "housing": {"homeless", "shelter"},
+    "immigration": {"asylum", "citizenship", "immigrant", "immigrants", "legal", "migrant", "refugee", "refugees"},
+    "justice": {"advocacy", "civil", "legal", "rights"},
+    "community": {"advocacy", "food", "health", "healthcare", "housing", "local", "outreach", "restoration", "sanitation"},
+    "youth": {"children", "school", "student", "students", "teen", "teens"}
+}
 
-    text = purpose.lower()
 
-    # Immigration Support
-    immigration_keywords = [
-        "immigration",
-        "asylum",
-        "migrant",
-        "refugee",
-        "legal services",
-        "citizenship"
-    ]
+def categorize_grant(name: str, purpose: str, categories=None):
+    categories = categories or CATEGORIES
 
-    # Education & Youth Development
-    education_keywords = [
-        "education",
-        "school",
-        "student",
-        "youth",
-        "scholarship",
-        "internship",
-        "learning",
-        "children",
-        "academic"
-    ]
+    # Prefer the explicit grant purpose; recipient names are only a fallback.
+    purpose_category = _best_category_match(purpose, categories)
 
-    # Arts, Culture, and Social Impact
-    arts_keywords = [
-        "arts",
-        "culture",
-        "museum",
-        "music",
-        "history",
-        "storytelling",
-        "community arts",
-        "oral history"
-    ]
+    if purpose_category:
+        return purpose_category
 
-    # Community Empowerment
-    community_keywords = [
-        "community",
-        "housing",
-        "food",
-        "health",
-        "empowerment",
-        "environment",
-        "restoration",
-        "support",
-        "advocacy",
-        "sanitation"
-    ]
+    name_category = _best_category_match(name, categories)
 
-    if any(word in text for word in immigration_keywords):
-        return "Immigration Support"
-
-    if any(word in text for word in education_keywords):
-        return "Education & Youth Development"
-
-    if any(word in text for word in arts_keywords):
-        return "Arts, Culture, and Social Impact"
-
-    if any(word in text for word in community_keywords):
-        return "Community Empowerment"
+    if name_category:
+        return name_category
 
     return "Other"
+
+
+def _best_category_match(text: str, categories):
+    text_tokens = _tokenize(text)
+
+    if not text_tokens:
+        return None
+
+    best_category = None
+    best_score = 0
+
+    for category in categories:
+        category_terms = _category_terms(category)
+        score = len(text_tokens & category_terms)
+
+        if _normalize(category) in _normalize(text):
+            score += 3
+
+        if score > best_score:
+            best_category = category
+            best_score = score
+
+    if best_score == 0:
+        return None
+
+    return best_category
+
+
+def _category_terms(category: str):
+    terms = set()
+
+    # Start from the configured category words, then add known related terms.
+    for token in _tokenize(category):
+        terms.add(token)
+        terms.update(RELATED_TERMS.get(token, set()))
+
+    return terms
+
+
+def _tokenize(text: str):
+    if not text or text == "None":
+        return set()
+
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", text.lower())
+        if token not in STOP_WORDS and len(token) > 1
+    }
+
+
+def _normalize(text: str):
+    if not text:
+        return ""
+
+    return " ".join(re.findall(r"[a-z0-9]+", text.lower()))

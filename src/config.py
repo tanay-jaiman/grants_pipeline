@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 
-CATEGORIES = ['Education & Youth Development', 'Community Empowerment', 'Arts, Culture, and Social Impact', 'Immigration Support']
+CATEGORIES = [
+    "Education & Youth Development",
+    "Community Empowerment",
+    "Arts, Culture, and Social Impact",
+    "Immigration Support"
+]
 
 MASTER_TABLE_CONFIG = {
     "title": "Master Grants Table",

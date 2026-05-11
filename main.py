@@ -44,6 +44,7 @@ def prepare_output_workbook(output_file: Path, sheet_name: str):
 
     workbook = load_workbook(output_file)
 
+    # Replace rerun years instead of leaving duplicate sheets behind.
     if sheet_name in workbook.sheetnames:
         del workbook[sheet_name]
 

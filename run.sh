@@ -9,6 +9,7 @@ cd "$(dirname "$0")"
 source venv/bin/activate
 
 choose_org_folder() {
+    # Pick the organization first so batch runs can process every year together.
     find input -mindepth 1 -maxdepth 1 -type d | sort | fzf \
         --prompt="Organization folder > " \
         --height=40% \
@@ -17,7 +18,7 @@ choose_org_folder() {
 }
 
 choose_run_mode() {
-    printf "Single XML file\nAll XML files in folder\n" | fzf \
+    printf "Single XML file\nAll XML files in folder\nDownload IRS XML by EIN\n" | fzf \
         --prompt="Run mode > " \
         --height=20% \
         --border
@@ -96,7 +97,7 @@ if [ "$RUN_MODE" = "Single XML file" ]; then
     fi
 
     run_pipeline "$XML_FILE" "$ORG_NAME" "$YEAR"
-else
+elif [ "$RUN_MODE" = "All XML files in folder" ]; then
     XML_FILES=()
 
     while IFS= read -r xml_file; do
@@ -125,4 +126,21 @@ else
 
         run_pipeline "$XML_FILE" "$ORG_NAME" "$YEAR"
     done
+else
+    read -p "EIN: " EIN
+    read -p "IRS index filing year [$(date +%Y)]: " INDEX_YEAR
+    INDEX_YEAR=${INDEX_YEAR:-$(date +%Y)}
+    read -p "Tax year to download [all matches]: " TAX_YEAR
+    read -p "Return type [990PF]: " RETURN_TYPE
+    RETURN_TYPE=${RETURN_TYPE:-990PF}
+
+    echo ""
+    echo "[+] Downloading IRS XML filings..."
+
+    python3 -m src.irs_download \
+        --ein "$EIN" \
+        --organization "$ORG_NAME" \
+        --index-year "$INDEX_YEAR" \
+        --tax-year "$TAX_YEAR" \
+        --return-type "$RETURN_TYPE"
 fi

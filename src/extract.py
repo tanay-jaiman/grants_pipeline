@@ -3,7 +3,7 @@
 # Imports 
 import pandas as pd
 from lxml import etree
-from src.grant_search import extract_grant_info, categorize_purpose
+from src.grant_search import extract_grant_info, categorize_grant
 
 # Parse the xml file
 def parse_xml(filepath: str):
@@ -30,7 +30,10 @@ def parse_xml(filepath: str):
     df['amount'] = pd.to_numeric(df['amount']) # Convert amount literals to numeric
     df = df.sort_values('amount', ascending=True).reset_index() # Sort according to grant amount ASCENDING
 
-    df['category'] = [categorize_purpose(t) for t in df['name'] + ' ' + df['purpose']]
+    df['category'] = [
+        categorize_grant(name, purpose)
+        for name, purpose in zip(df['name'], df['purpose'])
+    ]
 
     # print(df['category'].head())
 
