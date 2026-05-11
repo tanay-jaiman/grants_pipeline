@@ -71,10 +71,11 @@ CATEGORY_TABLE_CONFIG = {
     "start_col": 15,
 
     "columns": {
-        "Category": "Category",
-        "Total Amount": "Total Amount",
-        "Approx. Percentage (%)": "Approx. Percentage (%)",
-        "No. of Grants": "No. of Grants"
+        "category": "Category",
+        "total_amount": "Total Amount",
+        "number_of_grants": "No. of Grants",
+        "percentage_by_number": "Percentage by Number (%)",
+        "percentage_by_amount": "Percentage by Amount Distributed (%)"
     }
 }
 

@@ -6,3 +6,4 @@ venv/
 .DS_Store
 input/*
 output/*
+TODO.txt

@@ -27,41 +27,49 @@ data = parse_xml(FILENAME)
 
 # Create tables
 tables = []
+tables_to_print = ['all']
 
-tables.append({
-    'title' : 'Master Grants Table',
-    'data' : get_master(data)
-}) # Add Master Grants Table
+if 'master' in tables_to_print or 'all' in tables_to_print:
+    tables.append({
+        'title' : 'Master Grants Table',
+        'data' : get_master(data)
+    }) # Add Master Grants Table
 
-tables.append({
-    'title' : 'Grants Statistics Table',
-    'data' : get_min_max_median_table(data)
-}) # Add min/max Table
+if 'stats' in tables_to_print or 'all' in tables_to_print:
+    tables.append({
+        'title' : 'Grants Statistics Table',
+        'data' : get_min_max_median_table(data)
+    }) # Add min/max Table
 
-tables.append({
-    'title' : 'Unique Amounts Table',
-    'data' : get_unique_amounts_table(data)
-}) # Add Unique Amounts Table
+if 'unique' in tables_to_print or 'all' in tables_to_print:
+    tables.append({
+        'title' : 'Unique Amounts Table',
+        'data' : get_unique_amounts_table(data)
+    }) # Add Unique Amounts Table
 
-tables.append({
-    'title' : 'Grants Distributed by Range Table',
-    'data' : get_grants_by_range(data)
-}) # Add Grants Distributed by Range Table
+if 'range' in tables_to_print or 'all' in tables_to_print:
+    tables.append({
+        'title' : 'Grants Distributed by Range Table',
+        'data' : get_grants_by_range(data)
+    }) # Add Grants Distributed by Range Table
 
-tables.append({
-    'title' : 'Grants Distributed by Location Table',
-    'data' : get_location_distribution_table(data)
-}) # Add Grants Distributed by Location Table
+if 'location' in tables_to_print or 'all' in tables_to_print:
+    tables.append({
+        'title' : 'Grants Distributed by Location Table',
+        'data' : get_location_distribution_table(data)
+    }) # Add Grants Distributed by Location Table
 
-tables.append({
-    'title' : 'Grants Distributed by Categories Table',
-    'data' : get_category_distribution_table(data)
-}) # Add Grants Distributed by Categories Table
+if 'category' in tables_to_print or 'all' in tables_to_print:
+    tables.append({
+        'title' : 'Grants Distributed by Categories Table',
+        'data' : get_category_distribution_table(data)
+    }) # Add Grants Distributed by Categories Table
 
-tables.append({
-    'title' : 'States and Counties Table',
-    'data' : get_state_cities_table(data)
-}) # Add States and Counties Table
+if 'states' in tables_to_print or 'all' in tables_to_print:
+    tables.append({
+        'title' : 'States and Counties Table',
+        'data' : get_state_cities_table(data)
+    }) # Add States and Counties Table
 
 # Export the tables
 with pd.ExcelWriter(f'output/{SHEETNAME}', engine="openpyxl") as writer:

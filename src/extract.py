@@ -30,7 +30,9 @@ def parse_xml(filepath: str):
     df['amount'] = pd.to_numeric(df['amount']) # Convert amount literals to numeric
     df = df.sort_values('amount', ascending=True).reset_index() # Sort according to grant amount ASCENDING
 
-    df['purpose'] = [categorize_purpose(t) for t in df['name'] + ' ' + df['purpose']]
+    df['category'] = [categorize_purpose(t) for t in df['name'] + ' ' + df['purpose']]
+
+    # print(df['category'].head())
 
     # print(df.head())
     # print(df[['name', 'purpose', 'amount']].head())

@@ -34,6 +34,16 @@ def get_master(df: pd.DataFrame):
         columns=MASTER_TABLE_CONFIG['columns']
     )
 
+    total_row = pd.DataFrame([{
+        "Recipient Name": "TOTAL",
+        "Amount": master_df["Amount"].sum()
+    }])
+
+    master_df = pd.concat(
+        [master_df, total_row],
+        ignore_index=True
+    )
+
     return master_df
 
 
@@ -76,6 +86,16 @@ def get_unique_amounts_table(df: pd.DataFrame):
     unique_df = unique_df.sort_values(
         by='Amount',
         ascending=True
+    )
+
+    total_row = pd.DataFrame([{
+        "Amount": "TOTAL",
+        "No. of Grants": unique_df["No. of Grants"].sum()
+    }])
+
+    unique_df = pd.concat(
+        [unique_df, total_row],
+        ignore_index=True
     )
 
     return unique_df
@@ -216,11 +236,12 @@ def get_category_distribution_table(df: pd.DataFrame):
 
     temp_df = df.copy()
 
+    total_grants = len(temp_df)
     total_amount = temp_df["amount"].sum()
 
     category_df = (
         temp_df
-        .groupby("purpose")
+        .groupby("category")
         .agg(
             total_amount=("amount", "sum"),
 
@@ -229,7 +250,13 @@ def get_category_distribution_table(df: pd.DataFrame):
         .reset_index()
     )
 
-    category_df["percentage"] = (
+    category_df["percentage_by_number"] = (
+        category_df["number_of_grants"]
+        / total_grants
+        * 100
+    ).round(2)
+
+    category_df["percentage_by_amount"] = (
         category_df["total_amount"]
         / total_amount
         * 100
@@ -238,10 +265,6 @@ def get_category_distribution_table(df: pd.DataFrame):
     category_df = category_df.sort_values(
         by="total_amount",
         ascending=False
-    )
-
-    category_df.columns = list(
-        CATEGORY_TABLE_CONFIG["columns"].keys()
     )
 
     category_df = category_df.rename(
@@ -254,10 +277,12 @@ def get_category_distribution_table(df: pd.DataFrame):
         "Total Amount":
             category_df["Total Amount"].sum(),
 
-        "Approx. Percentage (%)": 100.00,
-
         "No. of Grants":
-            category_df["No. of Grants"].sum()
+            category_df["No. of Grants"].sum(),
+
+        "Percentage by Number (%)": 100.00,
+
+        "Percentage by Amount Distributed (%)": 100.00
     }])
 
     category_df = pd.concat(
@@ -274,6 +299,9 @@ def get_state_cities_table(df: pd.DataFrame):
     temp_df = temp_df.dropna(
         subset=["state", "city"]
     )
+
+    temp_df["state"] = temp_df["state"].str.strip().str.upper()
+    temp_df["city"] = temp_df["city"].str.strip().str.lower().str.title()
 
     cities_df = (
         temp_df
