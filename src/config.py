@@ -7,6 +7,21 @@ CATEGORIES = [
     "Immigration Support"
 ]
 
+RANGE_STEP_OVERRIDE = None
+RANGE_TARGET_BUCKETS = 10
+RANGE_MIN_BUCKETS = 5
+RANGE_MAX_BUCKETS = 12
+RANGE_MIN_NICE_BOUNDARY = 1000
+
+DISTANCE_PROVIDER = "straight_line"
+GOOGLE_MAPS_API_KEY_ENV = "GOOGLE_MAPS_API_KEY"
+OPENROUTESERVICE_API_KEY_ENV = "OPENROUTESERVICE_API_KEY"
+DISTANCE_CACHE_FILE = "input/.distance_cache.sqlite"
+DISTANCE_LEGACY_JSON_CACHE_FILE = "input/.distance_cache.json"
+DISTANCE_MAX_UNCACHED_ELEMENTS_PER_RUN = 50
+DISTANCE_REQUEST_DELAY_SECONDS = 1.1
+DISTANCE_USER_AGENT = "grants-pipeline/1.0"
+
 MASTER_TABLE_CONFIG = {
     "title": "Master Grants Table",
     "start_row": 0,
@@ -93,6 +108,8 @@ CITIES_STATE_CONFIG = {
 
     "columns": {
         "State": "State",
-        "Counties": "Counties"
+        "Counties": "Counties",
+        "No. of Grants": "No. of Grants",
+        "Total Amount": "Total Amount"
     }
 }

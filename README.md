@@ -35,9 +35,13 @@ Each generated sheet includes:
 - Grants by amount range
 - Location distribution
 - Category distribution
-- State/city distribution
+- State/city distribution with grant counts and total amount by state
 
 The workbook is formatted for spreadsheet review with compact table placement, currency formatting, percentage formatting, alternating row fills, and highlighted headers/totals.
+
+Grant amount ranges are generated from the data instead of using one fixed bucket size. Balanced filings use readable equal-width ranges, while filings with very small and very large grants use compact money-scale ranges so outliers do not collapse the smaller grants into one oversized bucket.
+
+The location distribution table is sorted by percentage of total amount distributed. The state/city table is sorted by number of grants, then total amount, so the most relevant states appear first.
 
 ## Installation
 
@@ -217,6 +221,65 @@ The categorizer checks:
 3. `Other`, if neither matches.
 
 Category matching is keyword-based. The configured category names provide the main signal, and `src/grant_search.py` expands common related terms such as `education -> school/student/youth` or `immigration -> asylum/refugee/migrant`.
+
+## Configuring Amount Ranges
+
+The range table is automatic by default. You can tune the behavior in `src/config.py`:
+
+```python
+RANGE_STEP_OVERRIDE = None
+RANGE_TARGET_BUCKETS = 10
+RANGE_MIN_BUCKETS = 5
+RANGE_MAX_BUCKETS = 12
+RANGE_MIN_NICE_BOUNDARY = 1000
+```
+
+Set `RANGE_STEP_OVERRIDE` to a number such as `5000` or `25000` when you want fixed-width buckets for a specific presentation style. Leave it as `None` for smart ranges.
+
+## Optional Distance Labels
+
+The state/city table can annotate cities with distance from the geographic center of that state:
+
+```text
+Berkeley (201 mi), Oakland (196 mi)
+```
+
+Distances use a lightweight two-step lookup:
+
+- Geocode the city once.
+- Calculate straight-line distance from the state center to the city locally.
+
+By default, the pipeline uses free public OpenStreetMap/Nominatim geocoding with a polite delay. For faster geocoding, set an OpenRouteService API key. Google Geocoding is also supported as a fallback if `GOOGLE_MAPS_API_KEY` is set.
+
+```bash
+export OPENROUTESERVICE_API_KEY="your-api-key"
+export GOOGLE_MAPS_API_KEY="your-api-key"
+grants-pipeline
+```
+
+You can also store keys in a local `.env` file:
+
+```text
+OPENROUTESERVICE_API_KEY=your-api-key
+GOOGLE_MAPS_API_KEY=your-api-key
+```
+
+`.env` is ignored by git and loaded automatically when distance labels are generated.
+
+The cache is a small local SQLite file:
+
+```text
+input/.distance_cache.sqlite
+```
+
+Because `input/` is ignored by git, cached API results stay local and are not shared with the repo. Older JSON caches are migrated automatically when the SQLite cache is first created. You can tune the safety limits in `src/config.py`:
+
+```python
+DISTANCE_MAX_UNCACHED_ELEMENTS_PER_RUN = 50
+DISTANCE_REQUEST_DELAY_SECONDS = 1.1
+```
+
+The limiter counts only uncached city coordinate lookups. Cached distances do not call external services again. If a run needs more uncached lookups than the configured cap, the remaining cities are left as plain names and the pipeline prints a warning.
 
 ## Notes
 

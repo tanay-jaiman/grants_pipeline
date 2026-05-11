@@ -195,7 +195,7 @@ def _format_sheet(worksheet):
 
     set_widths(1, [30, 34, 26, 24, 38, 14])
     set_widths(8, [16, 16])
-    set_widths(11, [18, 14, 28, 15, 18])
+    set_widths(11, [18, 36, 14, 15, 18])
     set_widths(17, [24, 14, 20, 22, 22])
 
     worksheet.sheet_format.defaultRowHeight = 22
