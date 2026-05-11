@@ -17,8 +17,8 @@ MASTER_TABLE_CONFIG = {
 
 STATS_TABLE_CONFIG = {
     "title": "Grant Statistics",
-    "start_row": 2,
-    "start_col": 9,
+    "start_row": 4,
+    "start_col": 7,
 
     "columns": {
         "Metric": "Metric",
@@ -28,8 +28,8 @@ STATS_TABLE_CONFIG = {
 
 UNIQUE_AMOUNTS_TABLE_CONFIG = {
     "title": "Unique Amount Table",
-    "start_row": 8,
-    "start_col": 9,
+    "start_row": 10,
+    "start_col": 7,
 
     "columns": {
         "Amount": "Amount",
@@ -39,8 +39,8 @@ UNIQUE_AMOUNTS_TABLE_CONFIG = {
 
 RANGE_TABLE_CONFIG = {
     "title": "Grants By Range and Recipients",
-    "start_row": 2,
-    "start_col": 13,
+    "start_row": 3,
+    "start_col": 10,
 
     "columns": {
         "Range": "Range",
@@ -53,8 +53,8 @@ RANGE_TABLE_CONFIG = {
 
 LOCATION_TABLE_CONFIG = {
     "title": "Location Distribution",
-    "start_row": 25,
-    "start_col": 15,
+    "start_row": 3,
+    "start_col": 16,
 
     "columns": {
         "Location": "Location",
@@ -67,8 +67,8 @@ LOCATION_TABLE_CONFIG = {
 
 CATEGORY_TABLE_CONFIG = {
     "title": "Amount Distribution By Category",
-    "spacing": 3,
-    "start_col": 15,
+    "start_row": 13,
+    "start_col": 10,
 
     "columns": {
         "category": "Category",
@@ -80,9 +80,9 @@ CATEGORY_TABLE_CONFIG = {
 }
 
 CITIES_STATE_CONFIG = {
-    "title": "State Counties Table",
-    "start_row": 110,
-    "start_col": 12,
+    "title": "Location - State and Counties",
+    "start_row": 22,
+    "start_col": 10,
 
     "columns": {
         "State": "State",

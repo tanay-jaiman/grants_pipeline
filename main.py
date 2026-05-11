@@ -5,6 +5,15 @@ from src.extract import parse_xml
 from src.analysis import *
 from src.export import export_year_sheet
 from src.clean import clean_xml_file
+from src.config import (
+    MASTER_TABLE_CONFIG,
+    STATS_TABLE_CONFIG,
+    UNIQUE_AMOUNTS_TABLE_CONFIG,
+    RANGE_TABLE_CONFIG,
+    LOCATION_TABLE_CONFIG,
+    CATEGORY_TABLE_CONFIG,
+    CITIES_STATE_CONFIG
+)
 import argparse
 
 # Add and Parse arguments
@@ -32,43 +41,51 @@ tables_to_print = ['all']
 if 'master' in tables_to_print or 'all' in tables_to_print:
     tables.append({
         'title' : 'Master Grants Table',
-        'data' : get_master(data)
+        'data' : get_master(data),
+        'config' : MASTER_TABLE_CONFIG,
+        'show_title' : False
     }) # Add Master Grants Table
 
 if 'stats' in tables_to_print or 'all' in tables_to_print:
     tables.append({
         'title' : 'Grants Statistics Table',
-        'data' : get_min_max_median_table(data)
+        'data' : get_min_max_median_table(data),
+        'config' : STATS_TABLE_CONFIG
     }) # Add min/max Table
 
 if 'unique' in tables_to_print or 'all' in tables_to_print:
     tables.append({
         'title' : 'Unique Amounts Table',
-        'data' : get_unique_amounts_table(data)
+        'data' : get_unique_amounts_table(data),
+        'config' : UNIQUE_AMOUNTS_TABLE_CONFIG
     }) # Add Unique Amounts Table
 
 if 'range' in tables_to_print or 'all' in tables_to_print:
     tables.append({
         'title' : 'Grants Distributed by Range Table',
-        'data' : get_grants_by_range(data)
+        'data' : get_grants_by_range(data),
+        'config' : RANGE_TABLE_CONFIG
     }) # Add Grants Distributed by Range Table
 
 if 'location' in tables_to_print or 'all' in tables_to_print:
     tables.append({
         'title' : 'Grants Distributed by Location Table',
-        'data' : get_location_distribution_table(data)
+        'data' : get_location_distribution_table(data),
+        'config' : LOCATION_TABLE_CONFIG
     }) # Add Grants Distributed by Location Table
 
 if 'category' in tables_to_print or 'all' in tables_to_print:
     tables.append({
         'title' : 'Grants Distributed by Categories Table',
-        'data' : get_category_distribution_table(data)
+        'data' : get_category_distribution_table(data),
+        'config' : CATEGORY_TABLE_CONFIG
     }) # Add Grants Distributed by Categories Table
 
 if 'states' in tables_to_print or 'all' in tables_to_print:
     tables.append({
         'title' : 'States and Counties Table',
-        'data' : get_state_cities_table(data)
+        'data' : get_state_cities_table(data),
+        'config' : CITIES_STATE_CONFIG
     }) # Add States and Counties Table
 
 # Export the tables
