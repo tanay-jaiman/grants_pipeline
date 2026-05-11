@@ -15,6 +15,10 @@ from src.config import (
     CITIES_STATE_CONFIG
 )
 import argparse
+import re
+from pathlib import Path
+
+from openpyxl import load_workbook
 
 # Add and Parse arguments
 parser = argparse.ArgumentParser()
@@ -28,7 +32,33 @@ args = parser.parse_args()
 FILENAME = args.xml
 ORGANIZATION = args.organization if len(args.organization) > 0 else args.xml.split('/')[-1].split('_')[0]
 YEAR = args.year if len(args.year) > 0 else args.xml.split('/')[-1].split('_')[1][:-4]
-SHEETNAME = f'{ORGANIZATION}_{YEAR}.xlsx'
+OUTPUT_NAME = re.sub(r"[^A-Za-z0-9_-]+", "_", ORGANIZATION.strip()).strip("_").lower()
+OUTPUT_DIR = Path("output") / OUTPUT_NAME
+OUTPUT_FILE = OUTPUT_DIR / f"{OUTPUT_NAME}.xlsx"
+PLACEHOLDER_SHEET = "__placeholder__"
+
+
+def prepare_output_workbook(output_file: Path, sheet_name: str):
+    if not output_file.exists():
+        return
+
+    workbook = load_workbook(output_file)
+
+    if sheet_name in workbook.sheetnames:
+        del workbook[sheet_name]
+
+    if not workbook.sheetnames:
+        workbook.create_sheet(PLACEHOLDER_SHEET)
+
+    workbook.save(output_file)
+
+
+def remove_placeholder_sheet(output_file: Path):
+    workbook = load_workbook(output_file)
+
+    if PLACEHOLDER_SHEET in workbook.sheetnames and len(workbook.sheetnames) > 1:
+        del workbook[PLACEHOLDER_SHEET]
+        workbook.save(output_file)
 
 # Extract data
 clean_xml_file(FILENAME)
@@ -89,7 +119,21 @@ if 'states' in tables_to_print or 'all' in tables_to_print:
     }) # Add States and Counties Table
 
 # Export the tables
-with pd.ExcelWriter(f'output/{SHEETNAME}', engine="openpyxl") as writer:
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+prepare_output_workbook(OUTPUT_FILE, YEAR)
+
+writer_kwargs = {
+    "path": OUTPUT_FILE,
+    "engine": "openpyxl"
+}
+
+if OUTPUT_FILE.exists():
+    writer_kwargs["mode"] = "a"
+    writer_kwargs["if_sheet_exists"] = "overlay"
+
+with pd.ExcelWriter(**writer_kwargs) as writer:
     export_year_sheet(writer, YEAR, tables)
 
-print(f"[+] Successfully created output/{SHEETNAME}.")
+remove_placeholder_sheet(OUTPUT_FILE)
+
+print(f"[+] Successfully updated {OUTPUT_FILE} sheet {YEAR}.")
