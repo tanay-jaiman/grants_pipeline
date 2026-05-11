@@ -1,26 +1,128 @@
 #!/bin/bash
 
+set -e
+
 # Move to project directory
 cd "$(dirname "$0")"
 
 # Activate venv
 source venv/bin/activate
 
-# Select XML file
-XML_FILE=$(find input -name "*.xml" | fzf)
+choose_org_folder() {
+    find input -mindepth 1 -maxdepth 1 -type d | sort | fzf \
+        --prompt="Organization folder > " \
+        --height=40% \
+        --border \
+        --preview='find {} -maxdepth 1 -name "*.xml" | sort | sed "s#^.*/##"'
+}
 
-if [ -z "$XML_FILE" ]; then
-    echo "No XML file selected."
+choose_run_mode() {
+    printf "Single XML file\nAll XML files in folder\n" | fzf \
+        --prompt="Run mode > " \
+        --height=20% \
+        --border
+}
+
+choose_xml_file() {
+    local org_folder="$1"
+
+    find "$org_folder" -maxdepth 1 -type f -name "*.xml" | sort | fzf \
+        --prompt="XML file > " \
+        --height=40% \
+        --border \
+        --preview='sed -n "1,40p" {}'
+}
+
+infer_year() {
+    local xml_file="$1"
+    local filename
+
+    filename=$(basename "$xml_file")
+
+    if [[ "$filename" =~ ([0-9]{4}) ]]; then
+        echo "${BASH_REMATCH[1]}"
+    fi
+}
+
+run_pipeline() {
+    local xml_file="$1"
+    local organization="$2"
+    local year="$3"
+
+    echo ""
+    echo "[+] Processing $xml_file"
+    echo "    Organization: $organization"
+    echo "    Year: $year"
+
+    python3 main.py \
+        --xml "$xml_file" \
+        --organization "$organization" \
+        --year "$year"
+}
+
+ORG_FOLDER=$(choose_org_folder || true)
+
+if [ -z "$ORG_FOLDER" ]; then
+    echo "No organization folder selected."
     exit 1
 fi
 
-# Gather metadata
-read -p "Organization Name: " ORG_NAME
+DEFAULT_ORG=$(basename "$ORG_FOLDER")
+read -p "Organization Name [$DEFAULT_ORG]: " ORG_NAME
+ORG_NAME=${ORG_NAME:-$DEFAULT_ORG}
 
-read -p "Year: " YEAR
+RUN_MODE=$(choose_run_mode || true)
 
-# Run pipeline
-python3 main.py \
-    --xml "$XML_FILE" \
-    --organization "$ORG_NAME" \
-    --year "$YEAR"
+if [ -z "$RUN_MODE" ]; then
+    echo "No run mode selected."
+    exit 1
+fi
+
+if [ "$RUN_MODE" = "Single XML file" ]; then
+    XML_FILE=$(choose_xml_file "$ORG_FOLDER" || true)
+
+    if [ -z "$XML_FILE" ]; then
+        echo "No XML file selected."
+        exit 1
+    fi
+
+    DEFAULT_YEAR=$(infer_year "$XML_FILE")
+    read -p "Year [$DEFAULT_YEAR]: " YEAR
+    YEAR=${YEAR:-$DEFAULT_YEAR}
+
+    if [ -z "$YEAR" ]; then
+        echo "Year is required."
+        exit 1
+    fi
+
+    run_pipeline "$XML_FILE" "$ORG_NAME" "$YEAR"
+else
+    XML_FILES=()
+
+    while IFS= read -r xml_file; do
+        XML_FILES+=("$xml_file")
+    done < <(find "$ORG_FOLDER" -maxdepth 1 -type f -name "*.xml" | sort)
+
+    if [ ${#XML_FILES[@]} -eq 0 ]; then
+        echo "No XML files found in $ORG_FOLDER."
+        exit 1
+    fi
+
+    echo ""
+    echo "[+] Found ${#XML_FILES[@]} XML files in $ORG_FOLDER."
+
+    for XML_FILE in "${XML_FILES[@]}"; do
+        YEAR=$(infer_year "$XML_FILE")
+
+        if [ -z "$YEAR" ]; then
+            read -p "Year for $XML_FILE: " YEAR
+        fi
+
+        if [ -z "$YEAR" ]; then
+            echo "Skipping $XML_FILE because no year was provided."
+            continue
+        fi
+
+        run_pipeline "$XML_FILE" "$ORG_NAME" "$YEAR"
+    done
+fi
