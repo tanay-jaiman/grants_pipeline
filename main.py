@@ -33,7 +33,7 @@ FILENAME = args.xml
 ORGANIZATION = args.organization if len(args.organization) > 0 else args.xml.split('/')[-1].split('_')[0]
 YEAR = args.year if len(args.year) > 0 else args.xml.split('/')[-1].split('_')[1][:-4]
 OUTPUT_NAME = re.sub(r"[^A-Za-z0-9_-]+", "_", ORGANIZATION.strip()).strip("_").lower()
-OUTPUT_DIR = Path("output") / OUTPUT_NAME
+OUTPUT_DIR = Path("output")
 OUTPUT_FILE = OUTPUT_DIR / f"{OUTPUT_NAME}.xlsx"
 PLACEHOLDER_SHEET = "__placeholder__"
 
@@ -71,6 +71,7 @@ tables_to_print = ['all']
 
 if 'master' in tables_to_print or 'all' in tables_to_print:
     tables.append({
+        'key' : 'master',
         'title' : 'Master Grants Table',
         'data' : get_master(data),
         'config' : MASTER_TABLE_CONFIG,
@@ -79,6 +80,7 @@ if 'master' in tables_to_print or 'all' in tables_to_print:
 
 if 'stats' in tables_to_print or 'all' in tables_to_print:
     tables.append({
+        'key' : 'stats',
         'title' : 'Grants Statistics Table',
         'data' : get_min_max_median_table(data),
         'config' : STATS_TABLE_CONFIG
@@ -86,6 +88,7 @@ if 'stats' in tables_to_print or 'all' in tables_to_print:
 
 if 'unique' in tables_to_print or 'all' in tables_to_print:
     tables.append({
+        'key' : 'unique',
         'title' : 'Unique Amounts Table',
         'data' : get_unique_amounts_table(data),
         'config' : UNIQUE_AMOUNTS_TABLE_CONFIG
@@ -93,6 +96,7 @@ if 'unique' in tables_to_print or 'all' in tables_to_print:
 
 if 'range' in tables_to_print or 'all' in tables_to_print:
     tables.append({
+        'key' : 'range',
         'title' : 'Grants Distributed by Range Table',
         'data' : get_grants_by_range(data),
         'config' : RANGE_TABLE_CONFIG
@@ -100,6 +104,7 @@ if 'range' in tables_to_print or 'all' in tables_to_print:
 
 if 'location' in tables_to_print or 'all' in tables_to_print:
     tables.append({
+        'key' : 'location',
         'title' : 'Grants Distributed by Location Table',
         'data' : get_location_distribution_table(data),
         'config' : LOCATION_TABLE_CONFIG
@@ -107,6 +112,7 @@ if 'location' in tables_to_print or 'all' in tables_to_print:
 
 if 'category' in tables_to_print or 'all' in tables_to_print:
     tables.append({
+        'key' : 'category',
         'title' : 'Grants Distributed by Categories Table',
         'data' : get_category_distribution_table(data),
         'config' : CATEGORY_TABLE_CONFIG
@@ -114,13 +120,14 @@ if 'category' in tables_to_print or 'all' in tables_to_print:
 
 if 'states' in tables_to_print or 'all' in tables_to_print:
     tables.append({
+        'key' : 'states',
         'title' : 'States and Counties Table',
         'data' : get_state_cities_table(data),
         'config' : CITIES_STATE_CONFIG
     }) # Add States and Counties Table
 
 # Export the tables
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+OUTPUT_DIR.mkdir(exist_ok=True)
 prepare_output_workbook(OUTPUT_FILE, YEAR)
 
 writer_kwargs = {

@@ -2,28 +2,6 @@
 
 echo "Setting up grants pipeline..."
 
-if ! command -v fzf &> /dev/null
-then
-    echo ""
-    echo "fzf is required but not installed."
-    echo ""
-    echo "Install instructions:"
-    echo ""
-
-    echo "macOS (Homebrew):"
-    echo "  brew install fzf"
-    echo ""
-
-    echo "Debian / Ubuntu:"
-    echo "  sudo apt update && sudo apt install fzf"
-    echo ""
-
-    echo "Windows:"
-    echo "  Just look up how to install fzf (fuzzyfinder) on Windows"
-
-    exit 1
-fi
-
 # Create virtual environment
 python3 -m venv venv
 

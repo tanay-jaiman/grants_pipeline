@@ -9,13 +9,13 @@ The pipeline extracts recipient grants from IRS XML, builds summary tables, cate
 For each organization, output is saved as:
 
 ```text
-output/<organization>/<organization>.xlsx
+output/<organization>.xlsx
 ```
 
 Each year is written as its own sheet:
 
 ```text
-output/firedoll/firedoll.xlsx
+output/firedoll.xlsx
 ├── 2021
 ├── 2022
 ├── 2023
@@ -48,24 +48,7 @@ git clone https://github.com/tanay-jaiman/grants_pipeline.git
 cd grants_pipeline
 ```
 
-### 2. Install `fzf`
-
-The interactive runner uses `fzf`.
-
-macOS:
-
-```bash
-brew install fzf
-```
-
-Debian/Ubuntu:
-
-```bash
-sudo apt update
-sudo apt install fzf
-```
-
-### 3. Run Setup
+### 2. Run Setup
 
 ```bash
 ./install.sh
@@ -92,6 +75,7 @@ Place XML files inside organization folders under `input/`:
 ```text
 input/
 └── firedoll/
+    ├── project.json
     ├── firedoll_2021.xml
     ├── firedoll_2022.xml
     ├── firedoll_2023.xml
@@ -101,6 +85,21 @@ input/
 
 The year is inferred from the first four-digit year in the filename.
 
+Each project folder can include `project.json`, which stores reusable project metadata:
+
+```json
+{
+  "ein": "94-3301999",
+  "index_years": "2021-2026",
+  "name": "Firedoll Foundation",
+  "return_type": "990PF",
+  "slug": "firedoll",
+  "tax_years": "2021-2025"
+}
+```
+
+The interactive workflow creates and updates this file automatically. Existing projects reuse saved values, so you do not need to re-enter the EIN every time.
+
 ## Usage
 
 Run the interactive workflow:
@@ -109,63 +108,71 @@ Run the interactive workflow:
 grants-pipeline
 ```
 
+Use the arrow keys to move through menus, press Enter to select, and press `q` to cancel.
+
 Then:
 
-1. Select an organization folder.
-2. Confirm or override the organization name.
-3. Choose `Single XML file`, `All XML files in folder`, or `Download IRS XML by EIN`.
-4. Confirm or override the inferred year when prompted.
+1. Choose `Start a new project` or `Work on an existing project`.
+2. For a new project, enter the organization name, EIN, tax years, and return type. The app downloads available IRS XML files and generates the workbook.
+3. For an existing project, select a folder, download missing IRS XML files, or regenerate a single XML file. Folder runs regenerate only the year sheets for XML files in that folder.
+4. Confirm any year that cannot be inferred from the XML filename.
 
 ### Single File Example
 
-Choose:
+Choose `Work on an existing project`, then:
 
 ```text
 input/firedoll
-Single XML file
+Choose one XML file
 firedoll_2025.xml
 ```
 
 This writes or replaces the `2025` sheet in:
 
 ```text
-output/firedoll/firedoll.xlsx
+output/firedoll.xlsx
 ```
 
 ### Batch Example
 
-Choose:
+Choose `Work on an existing project`, then:
 
 ```text
 input/firedoll
-All XML files in folder
+All XML files in input/firedoll
 ```
 
 This processes every `.xml` file in that folder and writes one sheet per year.
 
-### Download IRS XML by EIN
+### Download Missing XML for an Existing Project
 
-Choose:
+Choose `Work on an existing project`, select the project folder, then choose:
 
 ```text
-input/firedoll
-Download IRS XML by EIN
+Download missing IRS XML files
 ```
 
-Then enter:
+Saved metadata is used as the default for EIN, return type, and year ranges. Existing local files such as `input/firedoll/firedoll_2024.xml` are skipped, so only missing years are downloaded.
 
-- EIN
-- IRS index filing year, such as `2025`
-- Optional tax year filter, such as `2024`
-- Return type, usually `990PF` for private foundations
+### Download IRS XML by EIN
 
-The downloader reads the official IRS yearly XML index, finds matching filings, downloads the relevant IRS XML ZIP batch, extracts the matching XML object, and saves it under:
+Choose `Start a new project`, then enter:
+
+```text
+Project/organization name: firedoll
+EIN: 94-3301999
+Tax year(s): 2021-2025
+IRS index filing year(s): 2021-2026
+Return type: 990PF
+```
+
+The downloader reads the official IRS yearly XML index, finds matching filings, downloads the relevant IRS XML ZIP batch, extracts the matching XML object, saves it under:
 
 ```text
 input/<organization>/<organization>_<tax_year>.xml
 ```
 
-After downloading, run `grants-pipeline` again and choose `Single XML file` or `All XML files in folder` to generate the workbook.
+and then generates the workbook.
 
 ## Direct CLI Usage
 
@@ -184,9 +191,10 @@ Download IRS XML directly:
 python3 -m src.irs_download \
   --ein 123456789 \
   --organization example_foundation \
-  --index-year 2025 \
-  --tax-year 2024 \
-  --return-type 990PF
+  --index-years 2021-2026 \
+  --tax-years 2021-2025 \
+  --return-type 990PF \
+  --skip-existing
 ```
 
 ## Configuring Categories

@@ -145,7 +145,7 @@ def get_grants_by_range(
             unique_amounts=("amount", lambda x:
                 ", ".join(
                     map(
-                        lambda n: f"{int(n):,}",
+                        lambda n: str(int(n)),
                         sorted(x.unique())
                     )
                 )

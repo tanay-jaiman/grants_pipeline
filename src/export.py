@@ -8,15 +8,31 @@ SAGE_GREEN = "A8C69B"
 LIGHT_GRAY = "EDEDED"
 WHITE = "FFFFFF"
 BLACK = "000000"
+TABLE_PADDING_ROWS = 2
+TABLE_PADDING_COLS = 1
+
+
+LAYOUT = {
+    "stats": {"anchor": "top", "row": 4, "col": 7},
+    "unique": {"below": "stats", "col": 7},
+    "range": {"anchor": "top", "row": 3, "col": 10},
+    "category": {"below": "range", "col": 10},
+    "states": {"below": "category", "col": 10},
+    "location": {"anchor": "top", "row": 3, "after": "range"}
+}
 
 
 def export_year_sheet(writer, sheet_name, tables):
+    layout_positions = _calculate_layout(tables)
+
     for table_index, table in enumerate(tables, start=1):
         config = table["config"]
         dataframe = table["data"]
         title = table["title"]
-        start_row = config["start_row"]
-        start_col = config["start_col"]
+        start_row, start_col = layout_positions.get(
+            table.get("key"),
+            (config["start_row"], config["start_col"])
+        )
         show_title = table.get("show_title", True)
 
         if show_title:
@@ -57,6 +73,45 @@ def export_year_sheet(writer, sheet_name, tables):
         )
 
     _format_sheet(writer.book[sheet_name])
+
+
+def _calculate_layout(tables):
+    positions = {}
+    bounds = {}
+
+    for table in tables:
+        key = table.get("key")
+
+        if not key:
+            continue
+
+        rule = LAYOUT.get(key, {})
+        config = table["config"]
+        show_title = table.get("show_title", True)
+        height = len(table["data"]) + 1 + (1 if show_title else 0)
+        width = len(table["data"].columns)
+
+        if not rule:
+            start_row = config["start_row"]
+        elif rule.get("anchor") == "top":
+            start_row = rule.get("row", config["start_row"])
+        else:
+            previous = bounds[rule["below"]]
+            start_row = previous["end_row"] + TABLE_PADDING_ROWS + 1
+
+        if "after" in rule:
+            previous = bounds[rule["after"]]
+            start_col = previous["end_col"] + TABLE_PADDING_COLS + 1
+        else:
+            start_col = rule.get("col", config["start_col"])
+
+        positions[key] = (start_row, start_col)
+        bounds[key] = {
+            "end_row": start_row + height - 1,
+            "end_col": start_col + width - 1
+        }
+
+    return positions
 
 
 def _format_table(
