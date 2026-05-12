@@ -43,34 +43,134 @@ Grant amount ranges are generated from the data instead of using one fixed bucke
 
 The location distribution table is sorted by percentage of total amount distributed. The state/city table is sorted by number of grants, then total amount, so the most relevant states appear first.
 
-## Installation
+## Quick Start
 
-### 1. Clone the Repository
+These steps take a new user from a fresh clone to a generated workbook.
+
+### 1. Clone the Project
+
+Open a terminal and run:
 
 ```bash
 git clone https://github.com/tanay-jaiman/grants_pipeline.git
 cd grants_pipeline
 ```
 
-### 2. Run Setup
+### 2. Install Everything
 
 ```bash
 ./install.sh
 ```
 
-This creates a virtual environment, installs Python dependencies, creates `input/` and `output/`, and adds a `grants-pipeline` shell alias.
+This does the first-time setup:
 
-Reload your shell config after setup:
+- Creates `venv/`.
+- Installs Python dependencies.
+- Creates `input/` and `output/`.
+- Creates a local `.env` file if one does not already exist.
+- Adds a `grants-pipeline` shell alias.
+
+Reload your shell after setup:
 
 ```bash
 source ~/.zshrc
 ```
 
-or, if you use Bash:
+If you use Bash:
 
 ```bash
 source ~/.bashrc
 ```
+
+### 3. Add an Optional Geocoding Key
+
+Distance labels work without an API key, but first runs are slower. For faster distance-label geocoding, open `.env` and paste your OpenRouteService key:
+
+```text
+OPENROUTESERVICE_API_KEY=your-api-key
+GOOGLE_MAPS_API_KEY=
+```
+
+The `.env` file is local-only and ignored by git.
+
+### 4. Run the App
+
+```bash
+grants-pipeline
+```
+
+Use the arrow keys to move, Enter to select, and `q` to cancel.
+
+### 5. Start a New Project
+
+Choose:
+
+```text
+Start a new project
+```
+
+Then enter:
+
+```text
+Project/organization name: firedoll
+EIN: 94-3301999
+Tax year(s), e.g. 2021-2025: 2021-2025
+IRS index filing year(s): 2021-2026
+Return type: 990PF
+```
+
+The app downloads matching IRS XML filings, saves them under `input/<organization>/`, and generates the workbook.
+
+### 6. Find the Output
+
+The finished workbook is saved here:
+
+```text
+output/<organization>.xlsx
+```
+
+Each tax year becomes its own worksheet. Newer years are processed first so the latest sheet appears first.
+
+### 7. Work With Existing XML Files
+
+If you already have XML files, place them like this:
+
+```text
+input/
+└── example_foundation/
+    ├── example_foundation_2025.xml
+    ├── example_foundation_2024.xml
+    └── example_foundation_2023.xml
+```
+
+Then run:
+
+```bash
+grants-pipeline
+```
+
+Choose:
+
+```text
+Work on an existing project
+All XML files in input/example_foundation
+```
+
+The app processes XML files newest-to-oldest and writes one workbook at `output/example_foundation.xlsx`.
+
+## What Setup Creates
+
+After installation, the project has these local working files and folders:
+
+```text
+grants_pipeline/
+├── .env
+├── input/
+├── output/
+└── venv/
+```
+
+These are ignored by git, so user data, API keys, XML files, caches, and generated spreadsheets stay local.
 
 ## Input Layout
 
@@ -104,7 +204,7 @@ Each project folder can include `project.json`, which stores reusable project me
 
 The interactive workflow creates and updates this file automatically. Existing projects reuse saved values, so you do not need to re-enter the EIN every time.
 
-## Usage
+## Usage Reference
 
 Run the interactive workflow:
 

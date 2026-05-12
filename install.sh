@@ -11,12 +11,11 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Create required local folders and starter .env
+python3 -m src.setup
+
 # Make runner executable
 chmod +x run.sh
-
-# Create folders if missing
-mkdir -p input
-mkdir -p output
 
 # Absolute path to project
 PROJECT_PATH=$(pwd)

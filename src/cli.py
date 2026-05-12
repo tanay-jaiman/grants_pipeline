@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from src.irs_download import download_irs_filings
+from src.setup import ensure_prerequisites
 
 
 INPUT_DIR = Path("input")
@@ -64,7 +65,7 @@ def _work_on_existing_project():
     project_dir = _choose("Select a project folder:", project_dirs)
     project_name = project_dir.name
     metadata = _load_project_metadata(project_dir)
-    xml_files = sorted(project_dir.glob("*.xml"))
+    xml_files = _sort_xml_files_latest_first(project_dir.glob("*.xml"))
 
     if not xml_files:
         print(f"\nNo XML files found in {project_dir}.")
@@ -171,7 +172,7 @@ def _save_project_metadata(project_dir, metadata):
 
 
 def _process_files(xml_files, organization):
-    for xml_file in xml_files:
+    for xml_file in _sort_xml_files_latest_first(xml_files):
         year = _infer_year(xml_file)
 
         if not year:
@@ -301,6 +302,17 @@ def _infer_year(xml_file):
     return match.group(1) if match else ""
 
 
+def _sort_xml_files_latest_first(xml_files):
+    return sorted(
+        xml_files,
+        key=lambda xml_file: (
+            int(_infer_year(xml_file) or 0),
+            Path(xml_file).name
+        ),
+        reverse=True
+    )
+
+
 def _default_index_years(tax_years):
     if re.fullmatch(r"[0-9]{4}-[0-9]{4}", tax_years):
         start, end = tax_years.split("-", 1)
@@ -317,8 +329,7 @@ def _safe_name(value):
 
 
 def _ensure_base_dirs():
-    INPUT_DIR.mkdir(exist_ok=True)
-    OUTPUT_DIR.mkdir(exist_ok=True)
+    ensure_prerequisites()
 
 
 def _print_header():
