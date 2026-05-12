@@ -17,11 +17,68 @@ from src.config import (
     CATEGORY_TABLE_CONFIG,
     CITIES_STATE_CONFIG
 )
-from src.distance import add_distance_labels
+from src.services.distance import add_distance_labels
 
 
 NICE_STEP_MULTIPLIERS = (1, 2, 2.5, 5, 10)
 NICE_BOUNDARY_MULTIPLIERS = (1, 2, 5)
+
+
+def _apply_column_config(dataframe: pd.DataFrame, config: dict) -> pd.DataFrame:
+    columns = config["columns"]
+    available_columns = [
+        column
+        for column in columns.keys()
+        if column in dataframe.columns
+    ]
+
+    return dataframe[available_columns].rename(columns=columns)
+
+
+def _configured_column(config: dict, column: str) -> str:
+    return config["columns"].get(column, column)
+
+
+def _add_total_row(
+    dataframe: pd.DataFrame,
+    label_column: str,
+    totals: dict
+) -> pd.DataFrame:
+    if label_column not in dataframe.columns:
+        return dataframe
+
+    total_row = {label_column: "TOTAL"}
+
+    for column, value in totals.items():
+        if column in dataframe.columns:
+            total_row[column] = value
+
+    return pd.concat(
+        [dataframe, pd.DataFrame([total_row])],
+        ignore_index=True
+    )
+
+
+def _sort_by_existing_columns(
+    dataframe: pd.DataFrame,
+    columns: list[str],
+    ascending: list[bool]
+) -> pd.DataFrame:
+    sort_columns = []
+    sort_ascending = []
+
+    for column, direction in zip(columns, ascending):
+        if column in dataframe.columns:
+            sort_columns.append(column)
+            sort_ascending.append(direction)
+
+    if not sort_columns:
+        return dataframe
+
+    return dataframe.sort_values(
+        by=sort_columns,
+        ascending=sort_ascending
+    )
 
 
 def _format_range_amount(amount: float) -> str:
@@ -156,22 +213,18 @@ def get_master(df: pd.DataFrame):
         temp_df['zip'].fillna('')
     )
 
-    master_df = temp_df[
-        list(MASTER_TABLE_CONFIG['columns'].keys())
-    ]
+    master_df = _apply_column_config(temp_df, MASTER_TABLE_CONFIG)
+    label_column = _configured_column(MASTER_TABLE_CONFIG, "name")
+    amount_column = _configured_column(MASTER_TABLE_CONFIG, "amount")
 
-    master_df = master_df.rename(
-        columns=MASTER_TABLE_CONFIG['columns']
-    )
-
-    total_row = pd.DataFrame([{
-        "Recipient Name": "TOTAL",
-        "Amount": master_df["Amount"].sum()
-    }])
-
-    master_df = pd.concat(
-        [master_df, total_row],
-        ignore_index=True
+    master_df = _add_total_row(
+        master_df,
+        label_column,
+        {
+            amount_column: master_df[amount_column].sum()
+            if amount_column in master_df.columns
+            else None
+        }
     )
 
     return master_df
@@ -189,9 +242,7 @@ def get_min_max_median_table(df: pd.DataFrame):
         ]
     })
 
-    stats_df = stats_df.rename(
-        columns=STATS_TABLE_CONFIG["columns"]
-    )
+    stats_df = _apply_column_config(stats_df, STATS_TABLE_CONFIG)
 
     return stats_df
 
@@ -205,27 +256,29 @@ def get_unique_amounts_table(df: pd.DataFrame):
         .reset_index()
     )
 
-    unique_df.columns = list(
-        UNIQUE_AMOUNTS_TABLE_CONFIG["columns"].keys()
+    unique_df.columns = ["Amount", "Number of Grants"]
+
+    unique_df = _apply_column_config(unique_df, UNIQUE_AMOUNTS_TABLE_CONFIG)
+    amount_column = _configured_column(UNIQUE_AMOUNTS_TABLE_CONFIG, "Amount")
+    count_column = _configured_column(
+        UNIQUE_AMOUNTS_TABLE_CONFIG,
+        "Number of Grants"
     )
 
-    unique_df = unique_df.rename(
-        columns=UNIQUE_AMOUNTS_TABLE_CONFIG["columns"]
+    unique_df = _sort_by_existing_columns(
+        unique_df,
+        [amount_column],
+        [True]
     )
 
-    unique_df = unique_df.sort_values(
-        by='Amount',
-        ascending=True
-    )
-
-    total_row = pd.DataFrame([{
-        "Amount": "TOTAL",
-        "No. of Grants": unique_df["No. of Grants"].sum()
-    }])
-
-    unique_df = pd.concat(
-        [unique_df, total_row],
-        ignore_index=True
+    unique_df = _add_total_row(
+        unique_df,
+        amount_column,
+        {
+            count_column: unique_df[count_column].sum()
+            if count_column in unique_df.columns
+            else None
+        }
     )
 
     return unique_df
@@ -279,13 +332,17 @@ def get_grants_by_range(
             range_df["number_of_grants"] > 0
         ]
 
-    range_df.columns = list(
-        RANGE_TABLE_CONFIG["columns"].keys()
+    range_df = range_df.rename(
+        columns={
+            "grant_range": "Range",
+            "number_of_grants": "No. of Grants",
+            "unique_amounts": "Unique Amounts",
+            "total_amount": "Total Amount",
+            "recipients": "Recipients"
+        }
     )
 
-    range_df = range_df.rename(
-        columns=RANGE_TABLE_CONFIG["columns"]
-    )
+    range_df = _apply_column_config(range_df, RANGE_TABLE_CONFIG)
 
     return range_df
 
@@ -321,35 +378,56 @@ def get_location_distribution_table(df: pd.DataFrame):
         * 100
     ).round(2)
 
-    location_df.columns = list(
-        LOCATION_TABLE_CONFIG["columns"].keys()
-    )
-
     location_df = location_df.rename(
-        columns=LOCATION_TABLE_CONFIG["columns"]
+        columns={
+            "state": "Location",
+            "number_of_grants": "No. of Grants",
+            "total_grant_amount": "Amount of Total Grants Distributed",
+            "percentage_by_number": "Percentage by Number (%)",
+            "percentage_by_amount": "Percentage by Amount Distributed (%)"
+        }
     )
 
-    location_df = location_df.sort_values(
-        by=[
-            "Percentage by Amount Distributed (%)",
-            "Amount of Total Grants Distributed",
-            "Location"
+    location_df = _apply_column_config(location_df, LOCATION_TABLE_CONFIG)
+    location_column = _configured_column(LOCATION_TABLE_CONFIG, "Location")
+    count_column = _configured_column(LOCATION_TABLE_CONFIG, "No. of Grants")
+    amount_column = _configured_column(
+        LOCATION_TABLE_CONFIG,
+        "Amount of Total Grants Distributed"
+    )
+    percent_number_column = _configured_column(
+        LOCATION_TABLE_CONFIG,
+        "Percentage by Number (%)"
+    )
+    percent_amount_column = _configured_column(
+        LOCATION_TABLE_CONFIG,
+        "Percentage by Amount Distributed (%)"
+    )
+
+    location_df = _sort_by_existing_columns(
+        location_df,
+        [
+            percent_amount_column,
+            amount_column,
+            location_column
         ],
-        ascending=[False, False, True]
+        [False, False, True]
     )
 
-    total_row = pd.DataFrame([{
-        "Location": "TOTAL",
-        "No. of Grants": location_df["No. of Grants"].sum(),
-        "Percentage by Number (%)": 100.00,
-        "Amount of Total Grants Distributed":
-            location_df["Amount of Total Grants Distributed"].sum(),
-        "Percentage by Amount Distributed (%)": 100.00
-    }])
-
-    location_df = pd.concat(
-        [location_df, total_row],
-        ignore_index=True
+    location_df = _add_total_row(
+        location_df,
+        location_column,
+        {
+            count_column: location_df[count_column].sum()
+            if count_column in location_df.columns
+            else None,
+            percent_number_column: 100.00,
+            amount_column:
+                location_df[amount_column].sum()
+                if amount_column in location_df.columns
+                else None,
+            percent_amount_column: 100.00
+        }
     )
 
     return location_df
@@ -390,27 +468,32 @@ def get_category_distribution_table(df: pd.DataFrame):
         ascending=False
     )
 
-    category_df = category_df.rename(
-        columns=CATEGORY_TABLE_CONFIG["columns"]
+    category_df = _apply_column_config(category_df, CATEGORY_TABLE_CONFIG)
+    category_column = _configured_column(CATEGORY_TABLE_CONFIG, "category")
+    amount_column = _configured_column(CATEGORY_TABLE_CONFIG, "total_amount")
+    count_column = _configured_column(CATEGORY_TABLE_CONFIG, "number_of_grants")
+    percent_number_column = _configured_column(
+        CATEGORY_TABLE_CONFIG,
+        "percentage_by_number"
+    )
+    percent_amount_column = _configured_column(
+        CATEGORY_TABLE_CONFIG,
+        "percentage_by_amount"
     )
 
-    total_row = pd.DataFrame([{
-        "Category": "TOTAL",
-
-        "Total Amount":
-            category_df["Total Amount"].sum(),
-
-        "No. of Grants":
-            category_df["No. of Grants"].sum(),
-
-        "Percentage by Number (%)": 100.00,
-
-        "Percentage by Amount Distributed (%)": 100.00
-    }])
-
-    category_df = pd.concat(
-        [category_df, total_row],
-        ignore_index=True
+    category_df = _add_total_row(
+        category_df,
+        category_column,
+        {
+            amount_column: category_df[amount_column].sum()
+            if amount_column in category_df.columns
+            else None,
+            count_column: category_df[count_column].sum()
+            if count_column in category_df.columns
+            else None,
+            percent_number_column: 100.00,
+            percent_amount_column: 100.00
+        }
     )
 
     return category_df
@@ -448,33 +531,39 @@ def get_state_cities_table(df: pd.DataFrame):
     )
 
     cities_df["counties"] = cities_df["state"].map(city_labels)
-    cities_df = cities_df[
-        ["state", "counties", "number_of_grants", "total_amount"]
-    ]
-
-    cities_df.columns = list(
-        CITIES_STATE_CONFIG["columns"].keys()
-    )
-
     cities_df = cities_df.rename(
-        columns=CITIES_STATE_CONFIG["columns"]
+        columns={
+            "state": "State",
+            "counties": "Counties",
+            "number_of_grants": "No. of Grants",
+            "total_amount": "Total Amount"
+        }
     )
 
-    cities_df = cities_df.sort_values(
-        by=["No. of Grants", "Total Amount", "State"],
-        ascending=[False, False, True]
+    cities_df = _apply_column_config(cities_df, CITIES_STATE_CONFIG)
+    state_column = _configured_column(CITIES_STATE_CONFIG, "State")
+    counties_column = _configured_column(CITIES_STATE_CONFIG, "Counties")
+    count_column = _configured_column(CITIES_STATE_CONFIG, "No. of Grants")
+    amount_column = _configured_column(CITIES_STATE_CONFIG, "Total Amount")
+
+    cities_df = _sort_by_existing_columns(
+        cities_df,
+        [count_column, amount_column, state_column],
+        [False, False, True]
     )
 
-    total_row = pd.DataFrame([{
-        "State": "TOTAL",
-        "Counties": "",
-        "No. of Grants": cities_df["No. of Grants"].sum(),
-        "Total Amount": cities_df["Total Amount"].sum()
-    }])
-
-    cities_df = pd.concat(
-        [cities_df, total_row],
-        ignore_index=True
+    cities_df = _add_total_row(
+        cities_df,
+        state_column,
+        {
+            counties_column: "",
+            count_column: cities_df[count_column].sum()
+            if count_column in cities_df.columns
+            else None,
+            amount_column: cities_df[amount_column].sum()
+            if amount_column in cities_df.columns
+            else None
+        }
     )
 
     return cities_df

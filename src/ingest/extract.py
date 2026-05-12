@@ -3,7 +3,7 @@
 # Imports 
 import pandas as pd
 from lxml import etree
-from src.grant_search import extract_grant_info, categorize_grant
+from src.processing.grant_search import extract_grant_info, categorize_grant
 
 # Parse the xml file
 def parse_xml(filepath: str):

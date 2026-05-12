@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 # Imports
-from src.extract import parse_xml
-from src.analysis import *
-from src.export import export_year_sheet
-from src.clean import clean_xml_file
+from src.ingest.extract import parse_xml
+from src.tables.analysis import *
+from src.tables.export import export_year_sheet
+from src.ingest.clean import clean_xml_file
 from src.config import (
     MASTER_TABLE_CONFIG,
     STATS_TABLE_CONFIG,

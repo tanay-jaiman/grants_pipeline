@@ -11,6 +11,7 @@ GOOGLE_MAPS_API_KEY=
 def ensure_prerequisites():
     Path("input").mkdir(exist_ok=True)
     Path("output").mkdir(exist_ok=True)
+    Path("data/cache").mkdir(parents=True, exist_ok=True)
 
     env_path = Path(".env")
 

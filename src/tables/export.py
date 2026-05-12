@@ -169,18 +169,18 @@ def _format_table(
 
 
 def _apply_number_format(cell, header):
-    if header in {
-        "Amount",
-        "Total Amount",
-        "Amount of Total Grants Distributed",
-        "Value"
-    } and isinstance(cell.value, (int, float)):
+    header_text = str(header or "").lower()
+
+    if (
+        "amount" in header_text
+        or header_text in {"value"}
+    ) and isinstance(cell.value, (int, float)):
         cell.number_format = '$#,##0'
 
-    if header in {
-        "Percentage by Number (%)",
-        "Percentage by Amount Distributed (%)"
-    } and isinstance(cell.value, (int, float)):
+    if (
+        "percent" in header_text
+        or "%" in header_text
+    ) and isinstance(cell.value, (int, float)):
         cell.number_format = '0.00"%"'
 
 

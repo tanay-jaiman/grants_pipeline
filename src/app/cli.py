@@ -7,8 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from src.irs_download import download_irs_filings
-from src.setup import ensure_prerequisites
+from src.app.setup import ensure_prerequisites
+from src.ingest.irs_download import download_irs_filings
 
 
 INPUT_DIR = Path("input")

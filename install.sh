@@ -12,7 +12,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Create required local folders and starter .env
-python3 -m src.setup
+python3 -m src.app.setup
 
 # Make runner executable
 chmod +x run.sh

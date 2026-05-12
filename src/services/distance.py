@@ -18,7 +18,7 @@ from src.config import (
     GOOGLE_MAPS_API_KEY_ENV,
     OPENROUTESERVICE_API_KEY_ENV
 )
-from src.env import load_dotenv
+from src.app.env import load_dotenv
 
 
 load_dotenv()

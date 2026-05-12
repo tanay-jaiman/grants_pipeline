@@ -8,3 +8,5 @@ venv/
 input/*
 output/*
 TODO.md
+data/cache/*.legacy-json
+data/cache/*.corrupt

@@ -16,7 +16,7 @@ RANGE_MIN_NICE_BOUNDARY = 1000
 DISTANCE_PROVIDER = "straight_line"
 GOOGLE_MAPS_API_KEY_ENV = "GOOGLE_MAPS_API_KEY"
 OPENROUTESERVICE_API_KEY_ENV = "OPENROUTESERVICE_API_KEY"
-DISTANCE_CACHE_FILE = "input/.distance_cache.sqlite"
+DISTANCE_CACHE_FILE = "data/cache/distance_cache.sqlite"
 DISTANCE_LEGACY_JSON_CACHE_FILE = "input/.distance_cache.json"
 DISTANCE_MAX_UNCACHED_ELEMENTS_PER_RUN = 50
 DISTANCE_REQUEST_DELAY_SECONDS = 1.1
@@ -109,7 +109,6 @@ CITIES_STATE_CONFIG = {
     "columns": {
         "State": "State",
         "Counties": "Counties",
-        "No. of Grants": "No. of Grants",
-        "Total Amount": "Total Amount"
+        "No. of Grants": "No. of Grants"
     }
 }

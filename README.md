@@ -66,7 +66,7 @@ This does the first-time setup:
 
 - Creates `venv/`.
 - Installs Python dependencies.
-- Creates `input/` and `output/`.
+- Creates `input/`, `output/`, and `data/cache/`.
 - Creates a local `.env` file if one does not already exist.
 - Adds a `grants-pipeline` shell alias.
 
@@ -165,12 +165,14 @@ After installation, the project has these local working files and folders:
 ```text
 grants_pipeline/
 ├── .env
+├── data/
+│   └── cache/
 ├── input/
 ├── output/
 └── venv/
 ```
 
-These are ignored by git, so user data, API keys, XML files, caches, and generated spreadsheets stay local.
+`.env`, `input/`, `output/`, and `venv/` are ignored by git. Shared non-secret cache files under `data/cache/` can be committed so new users do not need to rebuild common lookups from scratch.
 
 ## Input Layout
 
@@ -292,7 +294,7 @@ python3 main.py \
 Download IRS XML directly:
 
 ```bash
-python3 -m src.irs_download \
+python3 -m src.ingest.irs_download \
   --ein 123456789 \
   --organization example_foundation \
   --index-years 2021-2026 \
@@ -320,7 +322,40 @@ The categorizer checks:
 2. The recipient organization name.
 3. `Other`, if neither matches.
 
-Category matching is keyword-based. The configured category names provide the main signal, and `src/grant_search.py` expands common related terms such as `education -> school/student/youth` or `immigration -> asylum/refugee/migrant`.
+Category matching is keyword-based. The configured category names provide the main signal, and `src/processing/grant_search.py` expands common related terms such as `education -> school/student/youth` or `immigration -> asylum/refugee/migrant`.
+
+## Source Layout
+
+The source files are grouped by responsibility:
+
+```text
+src/
+├── app/          # CLI, setup, and local .env loading
+├── ingest/       # IRS download, XML cleaning, and XML parsing
+├── processing/   # category and grant-field extraction helpers
+├── services/     # reusable services such as distance/geocoding cache
+├── tables/       # analysis table builders and Excel export
+└── config.py     # default global settings
+```
+
+## Configuring Table Columns
+
+Each table in `src/config.py` has a `columns` mapping. The key is the internal column the pipeline can produce, and the value is the column name shown in Excel.
+
+Remove a column from the mapping to hide it:
+
+```python
+CITIES_STATE_CONFIG = {
+    "title": "Location - State and Counties",
+    "columns": {
+        "State": "State",
+        "Counties": "Counties",
+        "No. of Grants": "No. of Grants"
+    }
+}
+```
+
+This removes `Total Amount` from the state/city table. You can also rename visible columns by changing the mapping value. Added columns must already be produced by that table's analysis function.
 
 ## Configuring Amount Ranges
 
@@ -369,10 +404,10 @@ GOOGLE_MAPS_API_KEY=your-api-key
 The cache is a small local SQLite file:
 
 ```text
-input/.distance_cache.sqlite
+data/cache/distance_cache.sqlite
 ```
 
-Because `input/` is ignored by git, cached API results stay local and are not shared with the repo. Older JSON caches are migrated automatically when the SQLite cache is first created. You can tune the safety limits in `src/config.py`:
+This cache contains reusable coordinate/distance lookups, not API keys. It can be committed to speed up first runs for other users. Older JSON caches from `input/.distance_cache.json` are migrated automatically when the SQLite cache is first created. You can tune the safety limits in `src/config.py`:
 
 ```python
 DISTANCE_MAX_UNCACHED_ELEMENTS_PER_RUN = 50
@@ -383,7 +418,7 @@ The limiter counts only uncached city coordinate lookups. Cached distances do no
 
 ## Notes
 
-- `input/`, `output/`, virtual environments, generated spreadsheets, and private TODO notes are ignored by git.
+- `.env`, `input/`, `output/`, virtual environments, generated spreadsheets, and private TODO notes are ignored by git.
 - XML files may be modified by the cleaner before parsing, so keep a separate raw copy if you need the original untouched filing.
 - IRS XML files are found through yearly filing indexes. The index year is the IRS posting year, which may be later than the tax period year.
 - Google Sheets can reinterpret native Excel table styles, so the exporter uses plain cell formatting instead of embedded Excel table objects.
